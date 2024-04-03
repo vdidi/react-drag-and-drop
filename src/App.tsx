@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react'
-import { Task } from './Task'
+import { Task } from './task';
+import { DragDropContext, Droppable } from '@hello-pangea/dnd'
 
 function App() {
   const [newTast, setNewTask] = useState("");
@@ -33,6 +34,19 @@ function App() {
     setNewTask("")
   }
 
+  function reorder<T>(list: T[], startIndex: number, endIndex: number) {
+    const result = Array.from(list);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    return result;
+  }
+
+  function onDragEnd (result: any) {
+    if(!result.destination) return;
+    const items = reorder(tasks, result.source.index, result.destination.index);
+    setTasks(items);
+  }
+
   return (
     <div className="w-full h-screen flex flex-col items-center px-4 pt-52">
       <h1 className="font-bold text-4xl text-white mb-4">Tarefas</h1>
@@ -55,11 +69,21 @@ function App() {
       </form>
 
       <section className="bg-zinc-100 p-3 rounded-md w-full max-w-2xl">
-        <article>
-          {tasks.map((task) => (
-            <Task key={task.id} task={task} />
-          ))}
-        </article>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId='tasks' type='list' direction='vertical'>
+            {(provided) => (
+              <article
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+              >
+                {tasks.map((task, index) => (
+                  <Task key={task.id} task={task} index={index}/>
+                ))}
+                {provided.placeholder}
+              </article>
+            )}
+          </Droppable>
+        </DragDropContext>
       </section>
 
 
